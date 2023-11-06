@@ -6,29 +6,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+#include "bmp.h"
 
 #define EXPECTED_NUMBER_OF_ARGS 2
-
-typedef struct header
-{
-    char signature[16];
-    int fileSize;
-    int reserved;
-    int dataOffset;
-} Header;
-
-typedef struct info_header
-{
-    int size;
-    int width;
-    int height;
-} InfoHeader;
-
-typedef struct bmp_format
-{
-    Header header;
-    InfoHeader infoHeader;
-} BmpFormat;
 
 void checkNumberOfArgs(int argc)
 {
@@ -50,7 +30,7 @@ void checkTypeForArgument(char *argv[])
     }
 }
 
-const char* permissionToSstring(mode_t permission) 
+const char* permissionToString(mode_t permission) 
 {
     static char buf[4];
     buf[0] = (permission & S_IRUSR) ? 'r' : '-';
@@ -91,9 +71,9 @@ void writeStatistics(char *image_file, BmpFormat bmpFormat, struct stat image_st
     dprintf(sfd, "identificatorul utilizatorului: %d\n", image_stat.st_uid);
     dprintf(sfd, "timpul ultimei modificari: %s\n", getLastModified(image_stat.st_mtim));
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
-    dprintf(sfd, "drepturi de acces user: %s\n", permissionToSstring(image_stat.st_mode & S_IRWXU));
-    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToSstring(image_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n", permissionToSstring(image_stat.st_mode & S_IRWXO));
+    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(image_stat.st_mode & S_IRWXU));
+    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(image_stat.st_mode & S_IRWXG));
+    dprintf(sfd, "drepturi de acces altii: %s\n", permissionToString(image_stat.st_mode & S_IRWXO));
 
     if (close(sfd) < 0)
     {
