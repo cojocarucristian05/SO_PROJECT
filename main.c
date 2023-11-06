@@ -35,7 +35,7 @@ void checkTypeForArgument(char *argv[])
 
 void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat image_stat)
 {
-    int sfd = open("statistica.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
 
     if (sfd < 0)
     {
@@ -52,7 +52,7 @@ void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat ima
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
     dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(image_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(image_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n", permissionToString(image_stat.st_mode & S_IRWXO));
+    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(image_stat.st_mode & S_IRWXO));
 
     if (close(sfd) < 0)
     {
@@ -131,19 +131,55 @@ void processImage(char *image_file)
 
 }
 
-void writeDirStatistics()
+void writeDirStatistics(struct dirent *dirent1,  struct stat dir_stat)
 {
-    printf("Dir\n");
+    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
+
+    if (sfd < 0)
+    {
+        perror("Eroare creare fisier statistica!");
+        exit(1);
+    }
+
+    dprintf(sfd, "nume director: %s\n", dirent1->d_name);
+    dprintf(sfd, "identificatorul utilizatorului: %d\n", dir_stat.st_uid);
+    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(dir_stat.st_mode & S_IRWXU));
+    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(dir_stat.st_mode & S_IRWXG));
+    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(dir_stat.st_mode & S_IRWXO));
+
+    if (close(sfd) < 0)
+    {
+        perror("Eroare inchidere fisier statistica!");
+        exit(2);
+    }
 }
 
-void writeLinkStatistics()
+void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat)
 {
-    printf("Links\n");
+    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
+
+    if (sfd < 0)
+    {
+        perror("Eroare creare fisier statistica!");
+        exit(1);
+    }
+
+    dprintf(sfd, "nume legatura: %s\n", dirent1->d_name);
+    dprintf(sfd, "dimensiune: %ld\n", link_stat.st_size);
+    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(link_stat.st_mode & S_IRWXU));
+    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(link_stat.st_mode & S_IRWXG));
+    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(link_stat.st_mode & S_IRWXO));
+
+    if (close(sfd) < 0)
+    {
+        perror("Eroare inchidere fisier statistica!");
+        exit(2);
+    }
 }
 
-void writeRegularFileStatistics(char *image_file,struct stat image_stat)
+void writeRegularFileStatistics(char *image_file, struct stat image_stat)
 {
-    int sfd = open("statistica.txt", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
 
     if (sfd < 0)
     {
@@ -158,7 +194,7 @@ void writeRegularFileStatistics(char *image_file,struct stat image_stat)
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
     dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(image_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(image_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n", permissionToString(image_stat.st_mode & S_IRWXO));
+    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(image_stat.st_mode & S_IRWXO));
 
     if (close(sfd) < 0)
     {
@@ -171,6 +207,8 @@ void processDIR(char *dir_path)
 {
     DIR *dir = NULL;
     struct dirent *dirent1 = NULL;
+    char path[PATH_MAX];
+    struct stat file_stat;
 
     dir = opendir(dir_path);
     if (dir == NULL)
@@ -183,28 +221,36 @@ void processDIR(char *dir_path)
     {
         if (strcmp(dirent1->d_name, ".") == 0 || strcmp(dirent1->d_name, "..") == 0)
             continue;
+        sprintf(path, "./dir/%s", dirent1->d_name);
         if (dirent1->d_type == DT_DIR)
         {
-            writeDirStatistics();
+            if (lstat(path, &file_stat) < 0)
+            {
+                perror("Eroare citire informatii fisier!");
+                exit(EXIT_FAILURE);
+            }
+            writeDirStatistics(dirent1, file_stat);
         }
-        if (dirent1->d_type == DT_LNK)
+        else if (dirent1->d_type == DT_LNK)
         {
-            writeLinkStatistics();
+            if (stat(path, &file_stat) < 0)
+            {
+                perror("Eroare citire informatii fisier!");
+                exit(EXIT_FAILURE);
+            }
+            writeLinkStatistics(dirent1, file_stat);
         }
-        if (dirent1->d_type == DT_REG)
+        else if (dirent1->d_type == DT_REG)
         {
             char command[300];
-            char path[PATH_MAX];
+            if (stat(path, &file_stat) < 0)
+            {
+                perror("Eroare citire informatii fisier!");
+                exit(EXIT_FAILURE);
+            }
             sprintf(command, "./scripts/bmp_regex.sh %s", dirent1->d_name);
-            sprintf(path, "./dir/%s", dirent1->d_name);
             if(system(command) != 0)
             {
-                struct stat file_stat;
-                if (stat(path, &file_stat) < 0)
-                {
-                    perror("Eroare citire informatii fisier!");
-                    exit(EXIT_FAILURE);
-                }
                 writeRegularFileStatistics(dirent1->d_name, file_stat);
             }
             else
@@ -212,6 +258,12 @@ void processDIR(char *dir_path)
                 processImage(path);
             }
         }
+    }
+
+    if (closedir(dir) < 0)
+    {
+        perror("Eroare inchidere director!");
+        exit(EXIT_FAILURE);
     }
 
 }
