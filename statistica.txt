@@ -1,8 +1,32 @@
-nume fisier: lfile
-dimensiune: 10
+nume fisier: ./dir/imagine.bmp
+inaltime: 1280
+lungime: 1920
+dimensiune: 7372938
 identificatorul utilizatorului: 1000
 timpul ultimei modificari: 6.11.2023
-contorul de legaturi: 2
+contorul de legaturi: 1
 drepturi de acces user: rw-
 drepturi de acces grup: ---
 drepturi de acces altii: ---
+
+nume fisier: file.txt
+dimensiune: 10
+identificatorul utilizatorului: 1000
+timpul ultimei modificari: 6.11.2023
+contorul de legaturi: 1
+drepturi de acces user: rw-
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+
+nume legatura: lfile
+dimensiune: 10
+drepturi de acces user: rw-
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+
+nume director: dir1
+identificatorul utilizatorului: 1000
+drepturi de acces user: rwx
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+
