@@ -18,12 +18,32 @@ const char* getLastModified(struct timespec st_mtim)
     return buf;
 }
 
-const char* permissionToString(mode_t permission) 
+const char* userPermissionToString(mode_t permission) 
 {
     static char buf[4];
     buf[0] = (permission & S_IRUSR) ? 'r' : '-';
     buf[1] = (permission & S_IWUSR) ? 'w' : '-';
     buf[2] = (permission & S_IXUSR) ? 'x' : '-';
+    buf[3] = '\0';
+    return buf;
+}
+
+const char* groupPermissionToString(mode_t permission) 
+{
+    static char buf[4];
+    buf[0] = (permission & S_IRGRP) ? 'r' : '-';
+    buf[1] = (permission & S_IWGRP) ? 'w' : '-';
+    buf[2] = (permission & S_IXGRP) ? 'x' : '-';
+    buf[3] = '\0';
+    return buf;
+}
+
+const char* otherPermissionToString(mode_t permission) 
+{
+    static char buf[4];
+    buf[0] = (permission & S_IROTH) ? 'r' : '-';
+    buf[1] = (permission & S_IWOTH) ? 'w' : '-';
+    buf[2] = (permission & S_IXOTH) ? 'x' : '-';
     buf[3] = '\0';
     return buf;
 }
