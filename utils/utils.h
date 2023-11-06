@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+void checkNumberOfArgs(int argc);
+void checkTypeForArgument(char *argv[]);
 const char* getLastModified(struct timespec st_mtim);
 const char* userPermissionToString(mode_t permission);
 const char* groupPermissionToString(mode_t permission);

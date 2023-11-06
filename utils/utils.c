@@ -4,6 +4,28 @@
 #include <fcntl.h>
 #include "utils.h"
 
+#define EXPECTED_NUMBER_OF_ARGS 2
+
+void checkNumberOfArgs(int argc)
+{
+    if (argc != EXPECTED_NUMBER_OF_ARGS)
+    {
+        perror("Invalid number of args!");
+        exit(1);
+    }
+}
+
+void checkTypeForArgument(char *argv[])
+{
+    char command[256];
+    sprintf(command, "./scripts/check_argument_type.sh %s", argv[1]);
+    if(system(command) != 0)
+    {
+       printf("Usage %s %s\n", argv[0], argv[1]);
+       exit(2);
+    }
+}
+
 const char* getLastModified(struct timespec st_mtim) 
 {
     static char buf[200];
