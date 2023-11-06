@@ -3,7 +3,7 @@
 
 typedef struct header
 {
-    char signature[16];
+    char signature[2];
     int fileSize;
     int reserved;
     int dataOffset;
