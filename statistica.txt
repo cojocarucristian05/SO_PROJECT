@@ -6,14 +6,20 @@ identificatorul utilizatorului: 1000
 timpul ultimei modificari: 6.11.2023
 contorul de legaturi: 1
 drepturi de acces user: rw-
+<<<<<<< HEAD
 drepturi de acces grup: r--
 drepturi de acces altii: r--
+=======
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+>>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf
 
 nume fisier: file.txt
 dimensiune: 10
 identificatorul utilizatorului: 1000
 timpul ultimei modificari: 6.11.2023
 contorul de legaturi: 1
+<<<<<<< HEAD
 drepturi de acces user: rw-
 drepturi de acces grup: r--
 drepturi de acces altii: r--
@@ -23,10 +29,26 @@ dimensiune: 10
 drepturi de acces user: rw-
 drepturi de acces grup: r--
 drepturi de acces altii: r--
+=======
+drepturi de acces user: rw-
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+
+nume legatura: lfile
+dimensiune: 10
+drepturi de acces user: rw-
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+>>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf
 
 nume director: dir1
 identificatorul utilizatorului: 1000
 drepturi de acces user: rwx
+<<<<<<< HEAD
 drepturi de acces grup: r-x
 drepturi de acces altii: r-x
+=======
+drepturi de acces grup: ---
+drepturi de acces altii: ---
+>>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf
 
