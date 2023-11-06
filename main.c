@@ -50,15 +50,9 @@ void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat ima
     dprintf(sfd, "identificatorul utilizatorului: %d\n", image_stat.st_uid);
     dprintf(sfd, "timpul ultimei modificari: %s\n", getLastModified(image_stat.st_mtim));
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
-<<<<<<< HEAD:main.c
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(image_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", groupPermissionToString(image_stat.st_mode & S_IRWXG));
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(image_stat.st_mode & S_IRWXO));
-=======
-    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(image_stat.st_mode & S_IRWXU));
-    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(image_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(image_stat.st_mode & S_IRWXO));
->>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf:main.c
 
     if (close(sfd) < 0)
     {
@@ -149,15 +143,9 @@ void writeDirStatistics(struct dirent *dirent1,  struct stat dir_stat)
 
     dprintf(sfd, "nume director: %s\n", dirent1->d_name);
     dprintf(sfd, "identificatorul utilizatorului: %d\n", dir_stat.st_uid);
-<<<<<<< HEAD:main.c
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(dir_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", groupPermissionToString(dir_stat.st_mode & S_IRWXG));
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(dir_stat.st_mode & S_IRWXO));
-=======
-    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(dir_stat.st_mode & S_IRWXU));
-    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(dir_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(dir_stat.st_mode & S_IRWXO));
->>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf:main.c
 
     if (close(sfd) < 0)
     {
@@ -178,15 +166,9 @@ void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat)
 
     dprintf(sfd, "nume legatura: %s\n", dirent1->d_name);
     dprintf(sfd, "dimensiune: %ld\n", link_stat.st_size);
-<<<<<<< HEAD:main.c
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(link_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", groupPermissionToString(link_stat.st_mode & S_IRWXG));
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(link_stat.st_mode & S_IRWXO));
-=======
-    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(link_stat.st_mode & S_IRWXU));
-    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(link_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(link_stat.st_mode & S_IRWXO));
->>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf:main.c
 
     if (close(sfd) < 0)
     {
@@ -210,15 +192,9 @@ void writeRegularFileStatistics(char *image_file, struct stat image_stat)
     dprintf(sfd, "identificatorul utilizatorului: %d\n", image_stat.st_uid);
     dprintf(sfd, "timpul ultimei modificari: %s\n", getLastModified(image_stat.st_mtim));
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
-<<<<<<< HEAD:main.c
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(image_stat.st_mode & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", groupPermissionToString(image_stat.st_mode & S_IRWXG));
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(image_stat.st_mode & S_IRWXO));
-=======
-    dprintf(sfd, "drepturi de acces user: %s\n", permissionToString(image_stat.st_mode & S_IRWXU));
-    dprintf(sfd, "drepturi de acces grup: %s\n", permissionToString(image_stat.st_mode & S_IRWXG));
-    dprintf(sfd, "drepturi de acces altii: %s\n\n", permissionToString(image_stat.st_mode & S_IRWXO));
->>>>>>> 1dbe3ded10ce13b94d5c9dffbbe2b337c32265bf:main.c
 
     if (close(sfd) < 0)
     {
