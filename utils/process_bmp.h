@@ -2,6 +2,6 @@
 #define PROCESS_BMP_H
 #include "../headers/bmp.h"
 
-void processImage(char *image_file);
+void processImage(char *image_file, struct stat image_stat);
 
 #endif

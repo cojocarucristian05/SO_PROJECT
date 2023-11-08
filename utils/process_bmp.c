@@ -7,16 +7,21 @@
 #include "writer.h"
 #include "process_bmp.h"
 
-void processImage(char *image_file)
-{
-    int imageFileDescriptor = open(image_file, O_RDONLY);
+void processImage(char *file_name, struct stat image_stat)
+{   
+    char path[PATH_MAX];
+    int imageFileDescriptor = 0;
+    BmpFormat bmpFormat;
+    
+    sprintf(path, "./dir/%s", file_name);
+    
+    imageFileDescriptor = open(path, O_RDONLY);
     if (imageFileDescriptor < 0)
     {
         perror("Eroare deschidere fisier intrare!");
         exit(EXIT_FAILURE);
     }
 
-    BmpFormat bmpFormat;
     if (read(imageFileDescriptor, bmpFormat.header.signature, 2) != 2)
     {
         perror("Eroare citire semnatura header!");
@@ -59,14 +64,7 @@ void processImage(char *image_file)
         exit(EXIT_FAILURE);
     }
 
-    struct stat image_stat;
-    if (stat(image_file, &image_stat) < 0)
-    {
-        perror("Eroare citire informatii fisier!");
-        exit(EXIT_FAILURE);
-    }
-
-    writeImageStatistics(image_file, bmpFormat, image_stat);    
+    writeImageStatistics(file_name, bmpFormat, image_stat);    
 
     if (close(imageFileDescriptor) < 0)
     {
