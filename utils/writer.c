@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <dirent.h>
 #include <time.h>
 #include "writer.h"
 
@@ -106,7 +105,6 @@ void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat ima
     }
 
 }
-
 
 const char* getLastModified(struct timespec st_mtim) 
 {
