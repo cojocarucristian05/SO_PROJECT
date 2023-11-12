@@ -22,12 +22,12 @@ void checkTypeForArgument(char *argv[])
     n = stat(argv[1], &st);
     if (n < 0)
     {
-        printf("1 - Usage %s %s\n", argv[0], argv[1]);
+        printf("Usage %s %s\n", argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
     if (!S_ISDIR(st.st_mode))
     {
-        printf("2 - Usage %s %s\n", argv[0], argv[1]);
+        printf("Usage %s %s\n", argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
 }
