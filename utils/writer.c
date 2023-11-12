@@ -12,6 +12,7 @@ const char* userPermissionToString(mode_t permission);
 const char* groupPermissionToString(mode_t permission);
 const char* otherPermissionToString(mode_t permission);
 void writePermission(int sfd, mode_t permission);
+void writePermissionLink(int sfd, mode_t permission);
 
 void writeDirStatistics(struct dirent *dirent1,  struct stat dir_stat)
 {
@@ -34,7 +35,7 @@ void writeDirStatistics(struct dirent *dirent1,  struct stat dir_stat)
     }
 }
 
-void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat)
+void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat, struct stat file_stat)
 {
     int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
 
@@ -45,8 +46,9 @@ void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat)
     }
 
     dprintf(sfd, "nume legatura: %s\n", dirent1->d_name);
-    dprintf(sfd, "dimensiune: %ld\n", link_stat.st_size);
-    writePermission(sfd, link_stat.st_mode);
+    dprintf(sfd, "dimensiune legatura: %ld\n", link_stat.st_size);
+    dprintf(sfd, "dimensiune fisier: %ld\n", file_stat.st_size);
+    writePermissionLink(sfd, link_stat.st_mode);
 
     if (close(sfd) < 0)
     {
@@ -155,4 +157,11 @@ void writePermission(int sfd, mode_t permission)
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(permission & S_IRWXU));
     dprintf(sfd, "drepturi de acces grup: %s\n", groupPermissionToString(permission & S_IRWXG));
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(permission & S_IRWXO));
+}
+
+void writePermissionLink(int sfd, mode_t permission)
+{
+    dprintf(sfd, "drepturi de acces user legatura: %s\n", userPermissionToString(permission & S_IRWXU));
+    dprintf(sfd, "drepturi de acces grup legatura: %s\n", groupPermissionToString(permission & S_IRWXG));
+    dprintf(sfd, "drepturi de acces altii legatura: %s\n\n", otherPermissionToString(permission & S_IRWXO));
 }

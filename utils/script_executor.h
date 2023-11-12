@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void checkTypeForArgument(char *argv[]);
 void processFile(char *file_name, struct stat file_stat);
 
 #endif

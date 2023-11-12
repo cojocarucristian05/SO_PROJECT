@@ -22,7 +22,16 @@ void processDirent(struct dirent *dirent1)
     }
     
     if (dirent1->d_type == DT_DIR) writeDirStatistics(dirent1, file_stat);
-    if (dirent1->d_type == DT_LNK) writeLinkStatistics(dirent1, file_stat);
+    if (dirent1->d_type == DT_LNK) 
+    {
+        struct stat link_stat;
+        if (lstat(path, &link_stat) < 0)
+        {
+            perror("Eroare citire informatii fisier!");
+            exit(EXIT_FAILURE);
+        }
+        writeLinkStatistics(dirent1, link_stat, file_stat);
+    }
     if (dirent1->d_type == DT_REG) processFile(dirent1->d_name, file_stat);
 }
 

@@ -1,8 +1,9 @@
 nume legatura: lfile2
-dimensiune: 10
-drepturi de acces user: rw-
-drepturi de acces grup: r--
-drepturi de acces altii: r--
+dimensiune legatura: 8
+dimensiune fisier: 10
+drepturi de acces user legatura: rwx
+drepturi de acces grup legatura: rwx
+drepturi de acces altii legatura: rwx
 
 nume fisier: imagine.bmp
 inaltime: 1280
@@ -25,10 +26,11 @@ drepturi de acces grup: r--
 drepturi de acces altii: r--
 
 nume legatura: lfile
-dimensiune: 10
-drepturi de acces user: rw-
-drepturi de acces grup: r--
-drepturi de acces altii: r--
+dimensiune legatura: 8
+dimensiune fisier: 10
+drepturi de acces user legatura: rwx
+drepturi de acces grup legatura: rwx
+drepturi de acces altii legatura: rwx
 
 nume director: dir1
 identificatorul utilizatorului: 1000
