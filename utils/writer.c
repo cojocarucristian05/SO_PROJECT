@@ -14,83 +14,39 @@ const char* otherPermissionToString(mode_t permission);
 void writePermission(int sfd, mode_t permission);
 void writePermissionLink(int sfd, mode_t permission);
 
-void writeDirStatistics(struct dirent *dirent1,  struct stat dir_stat)
+void writeDirStatistics(int sfd, struct dirent *dirent1,  struct stat dir_stat, int *nrLinii)
 {
-    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
-
-    if (sfd < 0)
-    {
-        perror("Eroare creare fisier statistica!");
-        exit(1);
-    }
-
     dprintf(sfd, "nume director: %s\n", dirent1->d_name);
     dprintf(sfd, "identificatorul utilizatorului: %d\n", dir_stat.st_uid);
     writePermission(sfd, dir_stat.st_mode);
-
-    if (close(sfd) < 0)
-    {
-        perror("Eroare inchidere fisier statistica!");
-        exit(2);
-    }
 }
 
-void writeLinkStatistics(struct dirent *dirent1, struct stat link_stat, struct stat file_stat)
+void writeLinkStatistics(int sfd, 
+                        struct dirent *dirent1, 
+                        struct stat link_stat, 
+                        struct stat file_stat, 
+                        int *nrLinii)
 {
-    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
-
-    if (sfd < 0)
-    {
-        perror("Eroare creare fisier statistica!");
-        exit(1);
-    }
-
     dprintf(sfd, "nume legatura: %s\n", dirent1->d_name);
     dprintf(sfd, "dimensiune legatura: %ld\n", link_stat.st_size);
     dprintf(sfd, "dimensiune fisier: %ld\n", file_stat.st_size);
     writePermissionLink(sfd, link_stat.st_mode);
-
-    if (close(sfd) < 0)
-    {
-        perror("Eroare inchidere fisier statistica!");
-        exit(2);
-    }
+    (*nrLinii) = 6;
 }
 
-void writeRegularFileStatistics(char *regular_file, struct stat regular_file_stat)
+void writeRegularFileStatistics(int sfd, char *regular_file, struct stat regular_file_stat, int *nrLinii)
 {
-    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
-
-    if (sfd < 0)
-    {
-        perror("Eroare creare fisier statistica!");
-        exit(1);
-    }
-
     dprintf(sfd, "nume fisier: %s\n", regular_file);
     dprintf(sfd, "dimensiune: %ld\n", regular_file_stat.st_size);
     dprintf(sfd, "identificatorul utilizatorului: %d\n", regular_file_stat.st_uid);
     dprintf(sfd, "timpul ultimei modificari: %s\n", getLastModified(regular_file_stat.st_mtim));
     dprintf(sfd, "contorul de legaturi: %ld\n", regular_file_stat.st_nlink);
     writePermission(sfd, regular_file_stat.st_mode);
-
-    if (close(sfd) < 0)
-    {
-        perror("Eroare inchidere fisier statistica!");
-        exit(2);
-    }
+    (*nrLinii) = 8;
 }
 
-void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat image_stat)
+void writeImageStatistics(int sfd, char *image_file, BmpFormat bmpFormat, struct stat image_stat, int *nrLinii)
 {
-    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
-
-    if (sfd < 0)
-    {
-        perror("Eroare creare fisier statistica!");
-        exit(1);
-    }
-
     dprintf(sfd, "nume fisier: %s\n", image_file);
     dprintf(sfd, "inaltime: %d\n", bmpFormat.infoHeader.height);
     dprintf(sfd, "lungime: %d\n", bmpFormat.infoHeader.width);
@@ -99,13 +55,7 @@ void writeImageStatistics(char *image_file, BmpFormat bmpFormat, struct stat ima
     dprintf(sfd, "timpul ultimei modificari: %s\n", getLastModified(image_stat.st_mtim));
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
     writePermission(sfd, image_stat.st_mode);
-
-    if (close(sfd) < 0)
-    {
-        perror("Eroare inchidere fisier statistica!");
-        exit(2);
-    }
-
+    (*nrLinii) = 10;
 }
 
 const char* getLastModified(struct timespec st_mtim) 

@@ -8,6 +8,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void processFile(char *file_name, struct stat file_stat);
+// void processFile(char *file_name, struct stat file_stat);
 
 #endif

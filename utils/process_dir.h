@@ -1,6 +1,6 @@
 #ifndef PROCESS_DIR_H
 #define PROCESS_DIR_H
 
-void processDIR(char *dir_path);
+void processDIR(char *din_path, char *dout_path);
 
 #endif

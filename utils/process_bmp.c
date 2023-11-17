@@ -23,7 +23,7 @@ void convertToGrayScale(BmpFormat *bmpFormat)
 }
 
 // functie care proceseaza imaginea (citeste date, proceseaza pixeli, scrie date)
-void processImage(char *file_name, struct stat image_stat)
+void processImage(int sfd, char *file_name, struct stat image_stat, int *nrLinii)
 {   
     char path[PATH_MAX];
     int imageFileDescriptor = 0;
@@ -88,7 +88,7 @@ void processImage(char *file_name, struct stat image_stat)
     }
 
     // scriere statistici imagine
-    writeImageStatistics(file_name, bmpFormat, image_stat);    
+    writeImageStatistics(sfd, file_name, bmpFormat, image_stat, nrLinii);    
 
     // inchidere fisier
     if (close(imageFileDescriptor) < 0)
