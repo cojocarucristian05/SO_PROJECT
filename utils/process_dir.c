@@ -8,7 +8,6 @@
 #include <dirent.h>
 #include <sys/wait.h>
 #include <unistd.h>
-// #include "script_executor.h"
 #include "writer.h"
 #include "process_dir.h"
 #include "process_bmp.h"
@@ -32,93 +31,135 @@ typedef struct file_info
     Type type;
 } FileInfo;
 
-void processDirent(struct dirent *dirent1)
-{
-    pid_t pid;
-    char path[PATH_MAX];
-    struct stat file_stat; 
-    int sfd;
-    char outputFilePath[PATH_MAX];       
-    int numarLiniiScrise = 0;
+char* extrageNumeIntrare(const char* numeComplet) {
+    char* nume_intrare = (char*)malloc(strlen(numeComplet) + 1);
+    
+    if (nume_intrare == NULL) {
+        fprintf(stderr, "Eroare de alocare memorie\n");
+        return NULL;
+    }
 
-    sprintf(path, "%s%s", DIR_PATH, dirent1->d_name);
+    char* punct = strrchr(numeComplet, '.');
+
+    if (punct != NULL) {
+        strncpy(nume_intrare, numeComplet, punct - numeComplet);
+        nume_intrare[punct - numeComplet] = '\0';
+    } else {
+        strcpy(nume_intrare, numeComplet);
+    }
+
+    return nume_intrare;
+}
+
+void processLinks(char *file_name)
+{
+    int sfd;
+    char path[PATH_MAX];
+    char outputFilePath[PATH_MAX];
+    struct stat link_stat;     
+    char *aux = extrageNumeIntrare(file_name);
+    sprintf(path, "%s%s", DIR_PATH, file_name);
+    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, aux);
+    if (lstat(path, &link_stat) < 0)
+    {
+        perror("Eroare citire informatii fisier!");
+        exit(EXIT_FAILURE);
+    }
+
+    sfd = open(outputFilePath, O_APPEND | O_WRONLY | O_CREAT,  0666);
+
+    if (sfd < 0)
+    {
+        perror("Eroare creare fisier statistica!");
+        exit(1);
+    }
+
+    dprintf(sfd, "nume legatura: %s\n", file_name);
+    dprintf(sfd, "identificatorul utilizatorului: %d\n", link_stat.st_uid);
+
+    if (close(sfd) < 0)
+    {
+        perror("Eroare inchidere fisier statistica!");
+        exit(2);
+    }
+}
+
+void processDirectory(char *file_name)
+{
+    int sfd;
+    char path[PATH_MAX];
+    char outputFilePath[PATH_MAX];
+    struct stat dir_stat;     
+    char *aux = extrageNumeIntrare(file_name);
+
+    sprintf(path, "%s%s", DIR_PATH, file_name);
+    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, aux);
+    if (stat(path, &dir_stat) < 0)
+    {
+        perror("Eroare citire informatii fisier!");
+        exit(EXIT_FAILURE);
+    }
+
+    sfd = open(outputFilePath, O_APPEND | O_WRONLY | O_CREAT,  0666);
+
+    if (sfd < 0)
+    {
+        perror("Eroare creare fisier statistica!");
+        exit(1);
+    }
+
+    dprintf(sfd, "nume director: %s\n", file_name);
+    dprintf(sfd, "identificatorul utilizatorului: %d\n", dir_stat.st_uid);
+
+    if (close(sfd) < 0)
+    {
+        perror("Eroare inchidere fisier statistica!");
+        exit(2);
+    }
+}
+
+void processRegularFile(char *file_name)
+{
+    int sfd;
+    char path[PATH_MAX];
+    char outputFilePath[PATH_MAX];
+    struct stat file_stat;     
+    char *aux = extrageNumeIntrare(file_name);
+
+    sprintf(path, "%s%s", DIR_PATH, file_name);
+    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, aux);
     if (stat(path, &file_stat) < 0)
     {
         perror("Eroare citire informatii fisier!");
         exit(EXIT_FAILURE);
     }
 
-    if ((pid = fork() < 0))
-    {
-        perror("Eroare creare proces!");
-        exit(EXIT_FAILURE);
-    }
-    if (pid == 0)
-    {
-        sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, dirent1->d_name);
-        printf("%s\n", outputFilePath);
-        
-        sfd = open(outputFilePath, O_APPEND | O_WRONLY | O_CREAT,  0666);
-        
-        if (sfd < 0)
-        {
-            perror("Eroare deschidere fisier iesire!");
-            exit(EXIT_FAILURE);
-        }
+    sfd = open(outputFilePath, O_APPEND | O_WRONLY | O_CREAT,  0666);
 
-        if (dirent1->d_type == DT_DIR)
-        {
-            writeDirStatistics(sfd, dirent1, file_stat, &numarLiniiScrise);
-        }
-        else if (dirent1->d_type == DT_LNK)
-        {
-            struct stat link_stat;
-            if (lstat(path, &link_stat) < 0)
-            {
-                perror("Eroare citire informatii legatura simbolica!");
-                exit(EXIT_FAILURE);
-            }
-            writeLinkStatistics(sfd, dirent1, link_stat, file_stat, &numarLiniiScrise);
-        }
-        else if (dirent1->d_type == DT_REG)
-        {
-            char command[300];
-            sprintf(command, "%s %s", BMP_REGEX_SCRIPT_PATH, dirent1->d_name);
-            if(system(command) != 0)
-            {
-                writeRegularFileStatistics(sfd, dirent1->d_name, file_stat, &numarLiniiScrise);
-            }
-            else
-            {
-                processImage(sfd, dirent1->d_name, file_stat, &numarLiniiScrise);
-            }
-        }
-        numarLiniiScrise = 20;
-        printf("Nr linii: %d\n", numarLiniiScrise);
-        exit(numarLiniiScrise);
-    }
-    else
+    if (sfd < 0)
     {
-        int status;
-        waitpid(pid, &status, 0);
-
-        // int sfd = open(STAT_FILE_PATH, O_APPEND | O_WRONLY | O_CREAT,  0666);
-        // if (sfd < 0)
-        // {
-        //     perror("Eroare deschidere fisier statistica!");
-        //     exit(EXIT_FAILURE);
-        // }
-
-        // printf("S-a încheiat procesul cu pid-ul %d și codul %d\n", pid, WEXITSTATUS(status));
-        // dprintf(sfd, "%d\n", WEXITSTATUS(status));
-        
-        // if (close(sfd) < 0)
-        // {
-        //     perror("Eroare inchidere fisier statistica proces parinte!");
-        //     exit(EXIT_FAILURE);
-        // }
-        printf("pid: %d %d\n", getpid(), getppid());
+        perror("Eroare creare fisier statistica!");
+        exit(1);
     }
+
+    dprintf(sfd, "nume fisier: %s\n", file_name);
+    dprintf(sfd, "identificatorul utilizatorului: %d\n", file_stat.st_uid);
+
+    if (close(sfd) < 0)
+    {
+        perror("Eroare inchidere fisier statistica!");
+        exit(2);
+    }
+}
+
+void processImage1(char *file_name)
+{
+    printf("Image writer\n");
+}
+
+void processImage2(char *file_name)
+{
+    printf("Image modifier\n");
 }
 
 void processDIR(char *din_path, char *dout_path)
@@ -130,13 +171,6 @@ void processDIR(char *din_path, char *dout_path)
     if (dir1 == NULL)
     {
         perror("Eroare deschidere director intrare!\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    dir2 = opendir(dout_path);
-    if (dir2 == NULL)
-    {
-        perror("Eroare deschidere director iesire!\n");
         exit(EXIT_FAILURE);
     }
     
@@ -170,16 +204,29 @@ void processDIR(char *din_path, char *dout_path)
     
     }
 
+    if (closedir(dir1) < 0)
+    {
+        free(files);
+        perror("Eroare inchidere director intrare!");
+        exit(EXIT_FAILURE);
+    }
+
+    dir2 = opendir(dout_path);
+    if (dir2 == NULL)
+    {
+        perror("Eroare deschidere director iesire!\n");
+        exit(EXIT_FAILURE);
+    }
+
     pid_t *pid = NULL, wpid;
     int processCount = 0;
 
     for(int i = 0; i < countEntries; i++)
     {
-        // printf("name: %s type: %d\n", files[i].file_name, files[i].type);
         if (files[i].type == dir || files[i].type == slink || files[i].type == reg_file) {
             pid = realloc(pid, (processCount + 1) * sizeof(pid_t));
             if (pid == NULL) {
-                perror("Eroare realocare memorie\n");
+                perror("Eroare realocare memorie procese\n");
                 exit(1);
             }
 
@@ -189,9 +236,9 @@ void processDIR(char *din_path, char *dout_path)
             }
 
             if (pid[processCount - 1] == 0) {
-                if (files[i].type == dir) printf("DIR\n");
-                if (files[i].type == slink) printf("SLINK\n");
-                if (files[i].type == reg_file) printf("RFILE\n");
+                if (files[i].type == dir) processDirectory(files[i].file_name);
+                if (files[i].type == slink) processLinks(files[i].file_name);
+                if (files[i].type == reg_file) processRegularFile(files[i].file_name);
                 exit(0);
             }
         }
@@ -199,7 +246,7 @@ void processDIR(char *din_path, char *dout_path)
         {
             pid = realloc(pid, (processCount + 2) * sizeof(pid_t));
             if (pid == NULL) {
-                perror("Eroare realocare memorie\n");
+                perror("Eroare realocare memorie procese\n");
                 exit(1);
             }
 
@@ -211,9 +258,9 @@ void processDIR(char *din_path, char *dout_path)
 
                 if (pid[processCount - 1] == 0) {
                     if (j == 0)
-                        printf("Image writer\n");
+                        processImage1(files[i].file_name);
                     else
-                        printf("Image modifier\n");
+                        processImage2(files[i].file_name);
                     exit(0);
                 }
             }
@@ -235,13 +282,7 @@ void processDIR(char *din_path, char *dout_path)
 
     free(pid);
     free(files);
-
-    if (closedir(dir1) < 0)
-    {
-        perror("Eroare inchidere director intrare!");
-        exit(EXIT_FAILURE);
-    }
-
+    
     if (closedir(dir2) < 0)
     {
         perror("Eroare inchidere director iesire!");
