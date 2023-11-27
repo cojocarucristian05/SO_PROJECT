@@ -4,15 +4,3 @@ drepturi de acces user: rwx
 drepturi de acces grup: r-x
 drepturi de acces altii: r-x
 
-nume director: dir1
-identificatorul utilizatorului: 1000
-drepturi de acces user: rwx
-drepturi de acces grup: r-x
-drepturi de acces altii: r-x
-
-nume director: dir1
-identificatorul utilizatorului: 1000
-drepturi de acces user: rwx
-drepturi de acces grup: r-x
-drepturi de acces altii: r-x
-

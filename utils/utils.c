@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "utils.h"
 
+/* functie auxiliara de extragere nume din path */
 char* extrageNumeIntrare(const char* numeComplet)
 {
     char* nume_intrare = (char*)malloc(strlen(numeComplet) + 1);
@@ -17,8 +18,10 @@ char* extrageNumeIntrare(const char* numeComplet)
         exit(EXIT_FAILURE);
     }
 
+    // cautam punctul in nume
     char* punct = strrchr(numeComplet, '.');
 
+    // daca l-am gasit, eliminam extensia
     if (punct != NULL) 
     {
         strncpy(nume_intrare, numeComplet, punct - numeComplet);
@@ -29,7 +32,7 @@ char* extrageNumeIntrare(const char* numeComplet)
         strcpy(nume_intrare, numeComplet);
     }
 
-    return nume_intrare;
+    return nume_intrare;    // returnam numele fara extensie
 }
 
 const char* getLastModified(struct timespec st_mtim) 
@@ -46,6 +49,7 @@ const char* getLastModified(struct timespec st_mtim)
     return buf;
 }
 
+/* functie auxiliara care extrage permisiile pentru user */
 const char* userPermissionToString(mode_t permission) 
 {
     static char buf[4];
@@ -56,6 +60,7 @@ const char* userPermissionToString(mode_t permission)
     return buf;
 }
 
+/* functie auxiliara care extrage permisiile pentru grup */
 const char* groupPermissionToString(mode_t permission) 
 {
     static char buf[4];
@@ -66,6 +71,7 @@ const char* groupPermissionToString(mode_t permission)
     return buf;
 }
 
+/* functie auxiliara care extrage permisiile pentru ceilalti utilizatori */
 const char* otherPermissionToString(mode_t permission) 
 {
     static char buf[4];

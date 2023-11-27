@@ -8,6 +8,7 @@
 #include "writer.h"
 #include "utils.h"
 
+/* functie auxiliara care scriere in fisierul cu descriptorul sfd permisii pentru fisier/director/imagine*/
 void writePermission(int sfd, mode_t permission)
 {
     dprintf(sfd, "drepturi de acces user: %s\n", userPermissionToString(permission & S_IRWXU));
@@ -15,6 +16,7 @@ void writePermission(int sfd, mode_t permission)
     dprintf(sfd, "drepturi de acces altii: %s\n\n", otherPermissionToString(permission & S_IRWXO));
 }
 
+/* functie auxiliara care scriere in fisierul cu descriptorul sfd permisii pentru legatura simbolica*/
 void writePermissionLink(int sfd, mode_t permission)
 {
     dprintf(sfd, "drepturi de acces user legatura: %s\n", userPermissionToString(permission & S_IRWXU));

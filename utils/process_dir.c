@@ -20,48 +20,56 @@
 #include "process_links.h"
 #include "process_directory.h"
 
+/* functie procesare director intrare */
 void processDIR(char *din_path, char *dout_path)
 {
     DIR *dir1 = NULL, *dir2 = NULL;
     struct dirent *dirent1 = NULL;
 
-    dir1 = opendir(din_path);
+    dir1 = opendir(din_path);       // deschidere director
     if (dir1 == NULL)
     {
         perror("Eroare deschidere director intrare!\n");
         exit(EXIT_FAILURE);
     }
     
-    FileInfo *files = NULL;
-    int countEntries = 0;
+    FileInfo *files = NULL;     // tablou informatii fisiere din directorul de intrare
+    int countEntries = 0;       // numar intrari in directorul de intrare
+    // parcurgere director
     while((dirent1 = readdir(dir1)) != NULL)
     {
+        // daca intrarea curenta este directorul curent sau directorul parinte -> skip
         if (strcmp(dirent1->d_name, ".") == 0 || strcmp(dirent1->d_name, "..") == 0)
             continue;
+        /* daca intrarea curenta este director, fisier sau legatura simbolica 
+                ->  se creeaza o noua intrare in tablou
+        */
         if (dirent1->d_type == DT_DIR || dirent1->d_type == DT_LNK || dirent1->d_type == DT_REG) 
         {
+            // realocare memorie
             files = (FileInfo*)realloc(files, (countEntries + 1) * sizeof(FileInfo));
             if (files == NULL) 
             {
                 perror("Eroare alocare memorie");
                 exit(EXIT_FAILURE);
             }
-            strcpy(files[countEntries].file_name, dirent1->d_name);
-            if (dirent1->d_type == DT_DIR) files[countEntries++].type = dir;
-            if (dirent1->d_type == DT_LNK) files[countEntries++].type = slink;
+            strcpy(files[countEntries].file_name, dirent1->d_name);             // copiere nume intrare
+            if (dirent1->d_type == DT_DIR) files[countEntries++].type = dir;    // copiere tip pt dir
+            if (dirent1->d_type == DT_LNK) files[countEntries++].type = slink;  // copiere tip pt slink
             if (dirent1->d_type == DT_REG)
             {
                 char command[300];
                 sprintf(command, "%s %s", BMP_REGEX_SCRIPT_PATH, dirent1->d_name);
-                if(system(command) != 0)
-                    files[countEntries++].type = reg_file;
+                if(system(command) != 0)                        // testam daca fisierul este obisnuit sau de tipul bmp
+                    files[countEntries++].type = reg_file;      // copiere tip pt regular file
                 else
-                    files[countEntries++].type = image;
+                    files[countEntries++].type = image;         // copiere tip pt bmp
             }
         }
     
     }
 
+    // inchidere director intrare
     if (closedir(dir1) < 0)
     {
         free(files);
@@ -69,6 +77,7 @@ void processDIR(char *din_path, char *dout_path)
         exit(EXIT_FAILURE);
     }
 
+    // deschidere director iesire
     dir2 = opendir(dout_path);
     if (dir2 == NULL)
     {
@@ -76,25 +85,29 @@ void processDIR(char *din_path, char *dout_path)
         exit(EXIT_FAILURE);
     }
 
-    pid_t *pid = NULL, wpid;
-    int processCount = 0;
+    pid_t *pid = NULL, wpid;        // tablou procese copii, id auxiliar pentru testarea valorii de return
+    int processCount = 0;           // numar procese copii
 
+    // se creeaza procesele copii in paralel in functie de tipul intrari curente din tablou
     for(int i = 0; i < countEntries; i++)
     {
+        // daca nu este de tipul bmp se creeaza un singur proces
         if (files[i].type == dir || files[i].type == slink || files[i].type == reg_file) {
-            pid = realloc(pid, (processCount + 1) * sizeof(pid_t));
+            pid = realloc(pid, (processCount + 1) * sizeof(pid_t));     // realocare memorie
             if (pid == NULL) {
                 perror("Eroare realocare memorie procese\n");
                 exit(1);
             }
 
+            // creeare proces copil
             if ((pid[processCount++] = fork()) < 0) {
                 perror("Eroare creare proces\n");
                 exit(1);
             }
 
+            // daca suntem in codul procesului fiu
             if (pid[processCount - 1] == 0) {
-                int nr = 0;
+                int nr = 0;             // numarul de linii scrise in fisierul <intrare>_statistica
                 if (files[i].type == dir) 
                 {
                     nr = processDirectory(files[i].file_name);
@@ -110,22 +123,25 @@ void processDIR(char *din_path, char *dout_path)
                 exit(nr);
             }
         }
-        else if (files[i].type == image)
+        else if (files[i].type == image)            // daca este un fisier bmp vom creea 2 procese
         {
             int nr = 0;
-            pid = realloc(pid, (processCount + 2) * sizeof(pid_t));
+            pid = realloc(pid, (processCount + 2) * sizeof(pid_t));     // realocare memorie
             if (pid == NULL) {
                 perror("Eroare realocare memorie procese\n");
                 exit(1);
             }
 
+            // creeare procese
             for (int j = 0; j < 2; j++) {
                 if ((pid[processCount++] = fork()) < 0) {
                     perror("Eroare creare proces\n");
                     exit(1);
                 }
 
+                // daca suntem in codul unuia dintre procesele fiu
                 if (pid[processCount - 1] == 0) {
+                    // un proces va scrie numarul de linii, iar celalalt va modifica imaginea
                     if (j == 0)
                         nr = processImage1(files[i].file_name);
                     else
@@ -136,6 +152,7 @@ void processDIR(char *din_path, char *dout_path)
         }
     }
 
+    // deschidem fisier statistica
     int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
 
     if (sfd < 0)
@@ -145,6 +162,7 @@ void processDIR(char *din_path, char *dout_path)
     }
 
     int status;
+    // pentru fiecare proces, asteptam valoarea de return
     for (int i = 0; i < processCount; i++) {
         wpid = wait(&status);
         if (WIFEXITED(status))
@@ -154,19 +172,22 @@ void processDIR(char *din_path, char *dout_path)
 
         if (WEXITSTATUS(status) > 0)
         {
-            dprintf(sfd, "%d\n", WEXITSTATUS(status));
+            dprintf(sfd, "%d\n", WEXITSTATUS(status));      // scriem in fisierul statistica din directorul de iesire numarul de linii scrise de procesul fiu curent
         }
     }
 
+    // inchidere fisier statistica
     if (close(sfd) < 0)
     {
         perror("Eroare inchidere fisier statistica!");
         exit(EXIT_FAILURE);
     }
 
+    // eliberare memorie
     free(pid);
     free(files);
     
+    // inchidere director iesire
     if (closedir(dir2) < 0)
     {
         perror("Eroare inchidere director iesire!");

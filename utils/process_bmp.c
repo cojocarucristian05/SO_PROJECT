@@ -21,11 +21,12 @@ void convertToGrayScale(BmpFormat *bmpFormat)
     }
 }
 
+// functie care parcurge fisierul imagine si retine intr-o structura conform header-ului informatii despre imagine
 BmpFormat* processImage(char *file_name)
 {   
     char path[PATH_MAX];
     int imageFileDescriptor = 0;
-    BmpFormat* bmpFormat = malloc(sizeof(BmpFormat)); // Allocate memory for the BmpFormat structure
+    BmpFormat* bmpFormat = malloc(sizeof(BmpFormat)); // alocare memorie
 
     if (bmpFormat == NULL) 
     {
@@ -73,7 +74,7 @@ BmpFormat* processImage(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    // Close the file
+    // inchidere fisier
     if (close(imageFileDescriptor) < 0)
     {
         perror("Eroare inchidere fisier intrare!");
@@ -83,25 +84,28 @@ BmpFormat* processImage(char *file_name)
     return bmpFormat;
 }
 
+// functie pentru scrierea informatiilor in fisierul <intrare>_statistica
 int processImage1(char *file_name)
 {
-    BmpFormat *bmp_format = processImage(file_name);
+    BmpFormat *bmp_format = processImage(file_name);    // extragem informatiile despre imagine
     int sfd;
     char path[PATH_MAX];
     char outputFilePath[PATH_MAX];
     struct stat image_stat;     
-    char *nume_intare = extrageNumeIntrare(file_name);
+    char *nume_intare = extrageNumeIntrare(file_name);  // extragem numele intrarii curente (eliminam path-ul)
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);
-    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, nume_intare);
-    free(nume_intare);
+    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, nume_intare);   // formare path fisier iesire
+    free(nume_intare);  // eliberare memorie nume
 
+    sprintf(path, "%s%s", DIR_PATH, file_name);         // formare path pentru a deschide fisierul
+    // citire info fisier folosinf functia stat
     if (stat(path, &image_stat) < 0)
     {
         perror("Eroare citire informatii fisier!");
         exit(EXIT_FAILURE);
     }
 
+    // deschidere fisire iesire
     sfd = open(outputFilePath, O_APPEND | O_WRONLY | O_CREAT,  0666);
 
     if (sfd < 0)
@@ -110,6 +114,7 @@ int processImage1(char *file_name)
         exit(EXIT_FAILURE);
     }
 
+    // scriere date in fisierul de iesire
     dprintf(sfd, "nume fisier: %s\n", file_name);
     dprintf(sfd, "inaltime: %d\n", bmp_format->infoHeader.height);
     dprintf(sfd, "lungime: %d\n", bmp_format->infoHeader.width);
@@ -119,16 +124,18 @@ int processImage1(char *file_name)
     dprintf(sfd, "contorul de legaturi: %ld\n", image_stat.st_nlink);
     writePermission(sfd, image_stat.st_mode);
 
+    // inchidere fisier iesire
     if (close(sfd) < 0)
     {
         perror("Eroare inchidere fisier statistica!");
         exit(EXIT_FAILURE);
     }
-    free(bmp_format);
+    free(bmp_format);   // eliberare memorie
 
-    return 10;
+    return 10;      // returnam numarul de linii scrise in fisierul de iesire
 }
 
+// functie care transforma imaginea in tonuri de gri
 void processImage2(char *file_name)
 {
     char path[PATH_MAX];
@@ -136,15 +143,15 @@ void processImage2(char *file_name)
     BmpFormat *bmp_format = processImage(file_name);
     int colorTableSize = bmp_format->infoHeader.width * bmp_format->infoHeader.height;
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);
-    imageFileDescriptor = open(path, O_RDWR);
+    sprintf(path, "%s%s", DIR_PATH, file_name);     // formare path fisier imagine
+    imageFileDescriptor = open(path, O_RDWR);       // deschidere fisier
     if (imageFileDescriptor < 0)
     {
         perror("Eroare deschidere fisier bmp pentru modificare pixeli!");
         exit(EXIT_FAILURE);
     }
 
-    convertToGrayScale(bmp_format);
+    convertToGrayScale(bmp_format);     // transformare pixeli
 
     // mutam cursorul inapoi la pozitia de inceput a tabloului
     if (lseek(imageFileDescriptor, bmp_format->header.dataOffset, SEEK_SET) < 0)
@@ -160,11 +167,12 @@ void processImage2(char *file_name)
         exit(EXIT_FAILURE);
     }
 
+    // inchidere fisier imagine
     if (close(imageFileDescriptor) < 0)
     {
         perror("Eroare inchidere fisier bmp dupa prelucrare pixeli!");
         exit(EXIT_FAILURE);
     }
 
-    free(bmp_format);
+    free(bmp_format);   // eliberare memorie
 }

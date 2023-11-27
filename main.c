@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "./utils/script_executor.h"
+#include <sys/stat.h>
 #include "./utils/process_dir.h"
 
 #define EXPECTED_NUMBER_OF_ARGS 3   /* numar de argumente asteptat */
