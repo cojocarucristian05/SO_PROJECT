@@ -4,8 +4,9 @@
 #include "./utils/script_executor.h"
 #include "./utils/process_dir.h"
 
-#define EXPECTED_NUMBER_OF_ARGS 3
+#define EXPECTED_NUMBER_OF_ARGS 3   /* numar de argumente asteptat */
 
+/* functie care verifica numarul de argumente in linia de comanda */
 void checkNumberOfArgs(int argc, char *argv[])
 {
     if (argc != EXPECTED_NUMBER_OF_ARGS)
@@ -15,6 +16,7 @@ void checkNumberOfArgs(int argc, char *argv[])
     }
 }
 
+/* functie care verifica tipul argumentelor din linia de comanda */
 void checkTypeForArgument(char *argv[])
 {
     struct stat st;
@@ -35,10 +37,11 @@ void checkTypeForArgument(char *argv[])
     }
 }
 
+/* functia main */
 int main(int argc, char *argv[])
 {
-    checkNumberOfArgs(argc, argv);
-    checkTypeForArgument(argv);
-    processDIR(argv[1], argv[2]);
+    checkNumberOfArgs(argc, argv);  // verificare numar argumente 
+    checkTypeForArgument(argv);     // verificare tipuri argumente
+    processDIR(argv[1], argv[2]);   // trimitere in executie a procesarii directorului de intrare
     return 0;
 }

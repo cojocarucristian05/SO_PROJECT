@@ -6,3 +6,19 @@ drepturi de acces user legatura: rwx
 drepturi de acces grup legatura: rwx
 drepturi de acces altii legatura: rwx
 
+nume legatura: lfile
+identificatorul utilizatorului: 1000
+dimensiune legatura: 8
+dimensiune fisier: 10
+drepturi de acces user legatura: rwx
+drepturi de acces grup legatura: rwx
+drepturi de acces altii legatura: rwx
+
+nume legatura: lfile
+identificatorul utilizatorului: 1000
+dimensiune legatura: 8
+dimensiune fisier: 10
+drepturi de acces user legatura: rwx
+drepturi de acces grup legatura: rwx
+drepturi de acces altii legatura: rwx
+
