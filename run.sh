@@ -2,8 +2,8 @@
 
 EXECUTABIL="program"
 MAIN="main.c"
-UTILS="./utils/script_executor.c ./utils/process_bmp.c ./utils/writer.c ./utils/process_dir.c"
-ARGS="dir/"
+UTILS="./utils/utils.c ./utils/writer.c ./utils/process_bmp.c ./utils/process_directory.c ./utils/process_links.c ./utils/process_regular_file.c ./utils/process_dir.c"
+ARGS="dir/ dir_iesire/"
 
 gcc -Wall -o $EXECUTABIL $UTILS $MAIN
 
