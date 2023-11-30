@@ -85,6 +85,16 @@ void processDIR(char *din_path, char *dout_path)
         exit(EXIT_FAILURE);
     }
 
+    int pipe1[2];   // pipe 1: primul fiu -> al doilea fiu
+    int pipe2[2];   // pipe 2: al doilea fiu -> parinte
+    
+    // creeaza pipe-uri
+    if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
+    {
+        perror("Eroare creare pipe\n");
+        exit(EXIT_FAILURE);
+    }
+
     pid_t *pid = NULL, wpid;        // tablou procese copii, id auxiliar pentru testarea valorii de return
     int processCount = 0;           // numar procese copii
 
@@ -92,7 +102,7 @@ void processDIR(char *din_path, char *dout_path)
     for(int i = 0; i < countEntries; i++)
     {
         // daca nu este de tipul bmp se creeaza un singur proces
-        if (files[i].type == dir || files[i].type == slink || files[i].type == reg_file) {
+        if (files[i].type == dir || files[i].type == slink) {
             pid = realloc(pid, (processCount + 1) * sizeof(pid_t));     // realocare memorie
             if (pid == NULL) {
                 perror("Eroare realocare memorie procese\n");
@@ -116,11 +126,53 @@ void processDIR(char *din_path, char *dout_path)
                 {
                     nr = processLinks(files[i].file_name);
                 }
-                if (files[i].type == reg_file) {
-                    nr = processRegularFile(files[i].file_name);
+                // if (files[i].type == reg_file) {
+                //     nr = processRegularFile(files[i].file_name);
                 
-                }
+                // }
                 exit(nr);
+            }
+        }
+        else if (files[i].type == reg_file)
+        {
+            int nr = 0;
+            pid = realloc(pid, (processCount + 2) * sizeof(pid_t));     // realocare memorie
+            if (pid == NULL) {
+                perror("Eroare realocare memorie procese\n");
+                exit(1);
+            }
+
+            // Creează proces pentru statistică
+            if ((pid[processCount++] = fork()) < 0) {
+                perror("Eroare creare proces\n");
+                exit(1);
+            }
+
+            // daca suntem in codul unuia dintre procesele fiu
+            if (pid[processCount - 1] == 0) {
+
+                // un proces va scrie numarul de linii, iar celalalt va modifica imaginea
+                nr = processRegularFile(files[i].file_name, pipe1);
+                exit(nr);
+            }
+
+            // Creează proces pentru conținut
+            if ((pid[processCount++] = fork()) < 0)
+            {
+                perror("Eroare creare proces\n");
+                exit(EXIT_FAILURE);
+            }
+
+            if (pid[processCount - 1] == 0)
+            {
+                // // Închide capătul de citire al pipe-ului de statistici
+                // close(pipes_stat[1]);
+
+                // // Închide capătul de scriere al pipe-ului de conținut
+                // close(pipes_content[1]);
+
+                processFileContent(pipe1, pipe2);
+                exit(0);
             }
         }
         else if (files[i].type == image)            // daca este un fisier bmp vom creea 2 procese
@@ -152,6 +204,11 @@ void processDIR(char *din_path, char *dout_path)
         }
     }
 
+    // inchidere capete pipe
+    close(pipe1[0]);
+    close(pipe1[1]);
+    close(pipe2[1]);
+
     // deschidem fisier statistica
     int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
 
@@ -182,6 +239,11 @@ void processDIR(char *din_path, char *dout_path)
         perror("Eroare inchidere fisier statistica!");
         exit(EXIT_FAILURE);
     }
+
+    // Citește din pipe 2
+    char buffer2[100];
+    read(pipe2[0], buffer2, sizeof(buffer2));
+    printf("Procesul parinte a citit: %s\n", buffer2);
 
     // eliberare memorie
     free(pid);
