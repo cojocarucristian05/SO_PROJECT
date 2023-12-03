@@ -1,4 +1,4 @@
-nume fisier: file.txt
+nume fisier: file2.txt
 identificatorul utilizatorului: 1000
 identificatorul utilizatorului: 1000
 timpul ultimei modificari: 3.12.2023

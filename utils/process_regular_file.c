@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <limits.h>
 #include "process_regular_file.h"
@@ -10,9 +12,12 @@
 #include "utils.h"
 #include "writer.h"
 
-/* functie procesare intrare curenta de tipul regular file */
+#define BUFFER_SIZE 1024
+
+/* functie procesare intrare curenta de tipul regular file scrie statistica, apoi scrie la iesirea standard continutul fisierului*/
 int processRegularFile(char *file_name)
 {
+    // printf("nume fisier: %s\n", file_name);
     int sfd;
     char path[PATH_MAX];
     char outputFilePath[PATH_MAX];
@@ -54,5 +59,39 @@ int processRegularFile(char *file_name)
         exit(EXIT_FAILURE);
     }
 
+
+    // printf("%s\n", file_name);
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) 
+    {
+        perror("Eroare deschidere fisier citire continut!");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[BUFFER_SIZE];
+    ssize_t bytesRead = 0;
+
+    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+    {
+        write(STDOUT_FILENO, buffer, bytesRead);
+    }
+
+    if (close(fd)) 
+    {
+        perror("Eroare inchidere fisier dupa citire continut\n");
+        exit(EXIT_FAILURE);
+    }
+
     return 8;   // returnam numarul de linii scrise in fisierul de iesire
+}
+
+/* functie de procesare continut -> trimite in executie scriptul care verifica numarul de propozitii corecte pentru continutul fisierului curent*/
+void processFileContent(char *c)
+{
+    // executa script
+    execlp("bash", "bash", "./scripts/numara_propozitii_corecte.sh", c, (char *)NULL);
+
+    // termina al doilea fiu in caz de eroare
+    perror("Eroare exec");
+    exit(EXIT_FAILURE);
 }

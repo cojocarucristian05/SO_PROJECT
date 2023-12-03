@@ -21,7 +21,7 @@
 #include "process_directory.h"
 
 /* functie procesare director intrare */
-void processDIR(char *din_path, char *dout_path)
+void processDIR(char *din_path, char *dout_path, char *c)
 {
     DIR *dir1 = NULL, *dir2 = NULL;
     struct dirent *dirent1 = NULL;
@@ -61,7 +61,9 @@ void processDIR(char *din_path, char *dout_path)
                 char command[300];
                 sprintf(command, "%s %s", BMP_REGEX_SCRIPT_PATH, dirent1->d_name);
                 if(system(command) != 0)                        // testam daca fisierul este obisnuit sau de tipul bmp
+                {
                     files[countEntries++].type = reg_file;      // copiere tip pt regular file
+                }
                 else
                     files[countEntries++].type = image;         // copiere tip pt bmp
             }
@@ -85,14 +87,24 @@ void processDIR(char *din_path, char *dout_path)
         exit(EXIT_FAILURE);
     }
 
+    int pipe1[2];   // pipe 1: primul fiu -> al doilea fiu
+    int pipe2[2];   // pipe 2: al doilea fiu -> parinte
+    
+    // deschidere pipe-uri
+    if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
+    {
+        perror("Eroare creare pipe\n");
+        exit(EXIT_FAILURE);
+    }
+
     pid_t *pid = NULL, wpid;        // tablou procese copii, id auxiliar pentru testarea valorii de return
     int processCount = 0;           // numar procese copii
-
+    
     // se creeaza procesele copii in paralel in functie de tipul intrari curente din tablou
     for(int i = 0; i < countEntries; i++)
     {
-        // daca nu este de tipul bmp se creeaza un singur proces
-        if (files[i].type == dir || files[i].type == slink || files[i].type == reg_file) {
+        // daca nu este de tipul fisier se creeaza un singur proces
+        if (files[i].type == dir || files[i].type == slink) {
             pid = realloc(pid, (processCount + 1) * sizeof(pid_t));     // realocare memorie
             if (pid == NULL) {
                 perror("Eroare realocare memorie procese\n");
@@ -116,11 +128,53 @@ void processDIR(char *din_path, char *dout_path)
                 {
                     nr = processLinks(files[i].file_name);
                 }
-                if (files[i].type == reg_file) {
-                    nr = processRegularFile(files[i].file_name);
-                
-                }
                 exit(nr);
+            }
+        }
+        else if (files[i].type == reg_file)
+        {
+            // daca este de tipul fisier obisnuit se creeaza 2 procese
+            int nr = 0;
+            pid = realloc(pid, (processCount + 2) * sizeof(pid_t));     // realocare memorie
+            if (pid == NULL) {
+                perror("Eroare realocare memorie procese\n");
+                exit(1);
+            }
+
+            // Creează proces pentru statistică
+            if ((pid[processCount++] = fork()) < 0) {
+                perror("Eroare creare proces\n");
+                exit(1);
+            }
+
+            // daca suntem in codul unuia dintre procesele fiu
+            if (pid[processCount - 1] == 0) {
+                close(pipe1[0]);
+                dup2(pipe1[1], STDOUT_FILENO);
+                close(pipe1[1]);
+                nr = processRegularFile(files[i].file_name);
+                exit(nr);
+            }
+
+            // cceeaza proces pentru procesare continut fisier
+            if ((pid[processCount++] = fork()) < 0)
+            {
+                perror("Eroare crealre proces\n");
+                exit(EXIT_FAILURE);
+            }
+
+            if (pid[processCount - 1] == 0)
+            {
+                // inchidem capetele pe care nu le folosim
+                close(pipe1[1]);
+                dup2(pipe1[0], STDIN_FILENO);
+                close(pipe1[0]);
+                close(pipe2[0]);
+                dup2(pipe2[1], STDOUT_FILENO);
+                close(pipe2[1]);
+                // trimitem in executie functia care ruleaza scriptul pentru continutul fisierului curent
+                processFileContent(c);
+                exit(0);
             }
         }
         else if (files[i].type == image)            // daca este un fisier bmp vom creea 2 procese
@@ -151,6 +205,24 @@ void processDIR(char *din_path, char *dout_path)
             }
         }
     }
+
+    // inchidem capetele pe care nu le folosim
+    close(pipe1[0]);
+    close(pipe1[1]);
+    close(pipe2[1]);
+
+    // suma propozitilor corecte
+    int suma = 0;
+    
+    // in timp ce al doilea proces fiu creat pentru regular file scrie la stdout, procesul parinte citeste de acolo
+    char buffer[4096];
+    ssize_t bytesRead;
+    while ((bytesRead = read(pipe2[0], buffer, sizeof(buffer))) > 0) {
+        suma = atoi(buffer);
+    }
+
+    // inchidem capetele pe care nu le folosim
+    close(pipe2[0]);
 
     // deschidem fisier statistica
     int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
@@ -194,4 +266,6 @@ void processDIR(char *din_path, char *dout_path)
         exit(EXIT_FAILURE);
     }
 
+    // afisam numarul de propozitii corecte ce contin caracterul <c>
+    printf("Au fost identificate in total <%d> propozitii corecte care contin caracterul <%c>\n", suma, c[0]);
 }
