@@ -6,4 +6,4 @@
 -> open terminal
 -> git clone https_repo
 -> cd SO_PROJECT
--> bash run.sh
+-> bash run.sh <c>, where <c> is an alphanumeric character
