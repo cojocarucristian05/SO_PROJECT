@@ -42,6 +42,6 @@ int main(int argc, char *argv[])
 {
     checkNumberOfArgs(argc, argv);  // verificare numar argumente 
     checkTypeForArgument(argv);     // verificare tipuri argumente
-    processDIR(argv[1], argv[2]);   // trimitere in executie a procesarii directorului de intrare
+    processDIR(argv[1], argv[2], argv[3]);   // trimitere in executie a procesarii directorului de intrare
     return 0;
 }

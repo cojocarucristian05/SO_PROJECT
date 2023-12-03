@@ -14,9 +14,10 @@
 
 #define BUFFER_SIZE 1024
 
-/* functie procesare intrare curenta de tipul regular file */
-int processRegularFile(char *file_name, int pipe1[2])
+/* functie procesare intrare curenta de tipul regular file scrie statistica, apoi scrie la iesirea standard continutul fisierului*/
+int processRegularFile(char *file_name)
 {
+    // printf("nume fisier: %s\n", file_name);
     int sfd;
     char path[PATH_MAX];
     char outputFilePath[PATH_MAX];
@@ -58,96 +59,39 @@ int processRegularFile(char *file_name, int pipe1[2])
         exit(EXIT_FAILURE);
     }
 
-    // inchide capatul de citire al pipe-ului
-    if (close(pipe1[0]) < 0)
+
+    // printf("%s\n", file_name);
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) 
     {
-        perror("Eroare inchidere capat scriere pipe!");
+        perror("Eroare deschidere fisier citire continut!");
         exit(EXIT_FAILURE);
     }
 
-    // deschidere fisier pentru citire continut
-    // int fd = open(file_name, O_RDONLY);
-    // if (fd == -1) {
-    //     perror("Eroare deschidere fișier pentru citire\n");
-    //     exit(EXIT_FAILURE);
-    // }
-
-    char buffer[1024];
+    char buffer[BUFFER_SIZE];
     ssize_t bytesRead = 0;
 
-    // // citim continutul fisierul si trimitem prin pipe la procesul fiu 2
-    // while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0) {
-    //     write(pipe1[1], buffer, bytesRead);
-    // }
-
-    // Scrie ceva în pipe 1
-    const char *message1 = "Mesaj de la primul fiu";
-    write(pipe1[1], message1, strlen(message1) + 1);
-
-    // // inchide fișierul
-    // if (close(fd) < 0)
-    // {
-    //     perror("Eroare inchidere fisier dupa citire!");
-    //     exit(EXIT_FAILURE);
-    // }
-
-    // inchide capatul de scriere al pipe-ului
-    if (close(pipe1[1]) < 0)
+    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
     {
-        perror("Eroare inchidere capat scriere pipe!");
+        write(STDOUT_FILENO, buffer, bytesRead);
+    }
+
+    if (close(fd)) 
+    {
+        perror("Eroare inchidere fisier dupa citire continut\n");
         exit(EXIT_FAILURE);
     }
 
     return 8;   // returnam numarul de linii scrise in fisierul de iesire
 }
 
-void processFileContent(int pipe1[2], int pipe2[2])
+/* functie de procesare continut -> trimite in executie scriptul care verifica numarul de propozitii corecte pentru continutul fisierului curent*/
+void processFileContent(char *c)
 {
-    close(pipe1[1]);
+    // executa script
+    execlp("bash", "bash", "./scripts/numara_propozitii_corecte.sh", c, (char *)NULL);
 
-    // Citește din pipe 1
-    char buffer[100];
-    read(pipe1[0], buffer, sizeof(buffer));
-
-    printf("Al doilea fiu a citit: %s\n", buffer);
-
-    // Închide capătul de citire al pipe-ului 1
-    close(pipe1[0]);
-
-    // Închide capătul nepotrivit al pipe-ului 2
-    close(pipe2[0]);
-
-    // Scrie ceva în pipe 2
-    const char *message2 = "Mesaj de la al doilea fiu";
-    write(pipe2[1], message2, strlen(message2) + 1);
-
-    // Închide capătul de scriere al pipe-ului 2
-    close(pipe2[1]);
-    // Citește conținutul prin pipe
-    // char buffer[1024];
-    // ssize_t bytesRead;
-    
-    // while ((bytesRead = read(pipe_read, buffer, sizeof(buffer))) > 0)
-    // {
-    //     // Procesează conținutul
-    //     // ...
-
-    //     // Trimite numărul de "propoziții corecte" prin pipe
-    //     int numPropozitiiCorecte = 42; // Modificați în funcție de implementarea dvs.
-    //     write(pipe_write, &numPropozitiiCorecte, sizeof(numPropozitiiCorecte));
-    // }
-
-    // // inchide capatul de citire al pipe-ului
-    // if (close(pipe_read) < 0)
-    // {
-    //     perror("Eroare inchidere capat scriere pipe!");
-    //     exit(EXIT_FAILURE);
-    // }
-
-    // // inchide capatul de scriere al pipe-ului
-    // if (close(pipe_write) < 0)
-    // {
-    //     perror("Eroare inchidere capat scriere pipe!");
-    //     exit(EXIT_FAILURE);
-    // }
+    // termina al doilea fiu in caz de eroare
+    perror("Eroare exec");
+    exit(EXIT_FAILURE);
 }
