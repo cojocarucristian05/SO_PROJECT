@@ -26,18 +26,18 @@ typedef struct info_header
     int colorsImportant;
 } InfoHeader;
 
-typedef struct color_table 
+typedef struct raster_data
 {
     char red;
     char green;
     char blue;
-} ColorTable;
+} RasterData;
 
 typedef struct bmp_format 
 {
     Header header;
     InfoHeader infoHeader;
-    ColorTable *colorTable;
+    RasterData *rasterData;
 } BmpFormat;
 
 #endif
