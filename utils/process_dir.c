@@ -20,9 +20,14 @@
 #include "process_links.h"
 #include "process_directory.h"
 
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 1024
+#endif
+
 /* functie procesare director intrare */
 void processDIR(char *din_path, char *dout_path, char *c)
 {
+    int suma = 0;
     DIR *dir1 = NULL, *dir2 = NULL;
     struct dirent *dirent1 = NULL;
 
@@ -87,16 +92,6 @@ void processDIR(char *din_path, char *dout_path, char *c)
         exit(EXIT_FAILURE);
     }
 
-    int pipe1[2];   // pipe 1: primul fiu -> al doilea fiu
-    int pipe2[2];   // pipe 2: al doilea fiu -> parinte
-    
-    // deschidere pipe-uri
-    if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
-    {
-        perror("Eroare creare pipe\n");
-        exit(EXIT_FAILURE);
-    }
-
     pid_t *pid = NULL, wpid;        // tablou procese copii, id auxiliar pentru testarea valorii de return
     int processCount = 0;           // numar procese copii
     
@@ -122,41 +117,61 @@ void processDIR(char *din_path, char *dout_path, char *c)
                 int nr = 0;             // numarul de linii scrise in fisierul <intrare>_statistica
                 if (files[i].type == dir) 
                 {
-                    nr = processDirectory(files[i].file_name);
+                    nr = processDirectory(files[i].file_name, din_path, dout_path);
                 }
                 if (files[i].type == slink) 
                 {
-                    nr = processLinks(files[i].file_name);
+                    nr = processLinks(files[i].file_name, din_path, dout_path);
                 }
                 exit(nr);
             }
         }
         else if (files[i].type == reg_file)
         {
+            int pipe1[2];   // pipe 1: primul fiu -> al doilea fiu
+            int pipe2[2];   // pipe 2: al doilea fiu -> parinte
+
             // daca este de tipul fisier obisnuit se creeaza 2 procese
             int nr = 0;
+
             pid = realloc(pid, (processCount + 2) * sizeof(pid_t));     // realocare memorie
             if (pid == NULL) {
                 perror("Eroare realocare memorie procese\n");
                 exit(1);
             }
 
-            // Creează proces pentru statistică
+            // creeare pipe1
+            if (pipe(pipe1) == -1 )
+            {
+                perror("Eroare creare pipe\n");
+                exit(EXIT_FAILURE);
+            }
+
+            // Creeaza proces pentru statistica
             if ((pid[processCount++] = fork()) < 0) {
                 perror("Eroare creare proces\n");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
 
             // daca suntem in codul unuia dintre procesele fiu
             if (pid[processCount - 1] == 0) {
-                close(pipe1[0]);
-                dup2(pipe1[1], STDOUT_FILENO);
-                close(pipe1[1]);
-                nr = processRegularFile(files[i].file_name);
-                exit(nr);
+                close(pipe1[0]);                                        // inchidem capat citire in procesul fiu
+                dup2(pipe1[1], STDOUT_FILENO);                          // redirectionam capatul de scriere al pipe-ului 1 la iesirea standard
+                nr = processRegularFile(files[i].file_name, din_path, dout_path, pipe1[1]);  // procesam fisierul (statistica + citire continut)
+                close(pipe1[1]);                                        // inchidem capatul de scriere in procesul fiu
+                exit(nr);                                               // intoarcem numarul de linii scrise
             }
 
-            // cceeaza proces pentru procesare continut fisier
+            close(pipe1[1]);        // inchidem capatul scriere in procesul parinte
+
+            // creeare pipe2
+            if (pipe(pipe2) == -1)
+            {
+                perror("Eroare creare pipe\n");
+                exit(EXIT_FAILURE);
+            }
+
+            // creeaza proces pentru procesare continut fisier
             if ((pid[processCount++] = fork()) < 0)
             {
                 perror("Eroare crealre proces\n");
@@ -165,17 +180,31 @@ void processDIR(char *din_path, char *dout_path, char *c)
 
             if (pid[processCount - 1] == 0)
             {
-                // inchidem capetele pe care nu le folosim
-                close(pipe1[1]);
-                dup2(pipe1[0], STDIN_FILENO);
-                close(pipe1[0]);
-                close(pipe2[0]);
-                dup2(pipe2[1], STDOUT_FILENO);
-                close(pipe2[1]);
+                close(pipe2[0]);                // inchidem capatul de citire al pipe-ulu 2 in procesul fiu 2
+                dup2(pipe1[0], STDIN_FILENO);   // redirectionam capatul de citire al pipe-ului 1 la intrarea standard
+                dup2(pipe2[1], STDOUT_FILENO);  // redirectionam capatul de scriere al pipe-ului 2 la iesirea standard
                 // trimitem in executie functia care ruleaza scriptul pentru continutul fisierului curent
                 processFileContent(c);
+                close(pipe1[0]);            // inchidem capatul de citire al pipe-ului 1 in procesul fiu 2
+                close(pipe2[1]);            // inchidem capatul de scriere al pipe-ului 2 in procesul fiu 2
                 exit(0);
             }
+
+            // inchidem capetele pe care nu le folosim
+            close(pipe1[0]);
+            close(pipe2[1]);
+            
+            dup2(pipe2[0], STDIN_FILENO);       // redirectionam capatul de citire al pipe-ului 2 la intrarea standard
+            
+            // in timp ce al doilea proces fiu creat pentru regular file scrie la stdout, procesul parinte citeste de la stdin
+            char buffer[BUFFER_SIZE];
+            ssize_t bytesRead;
+            while ((bytesRead = read(pipe2[0], buffer, sizeof(buffer))) > 0) {
+                suma += atoi(buffer);
+            }
+
+            // inchidem capetul de citire al pipe-ului 2 dupa ce procesul parinte a terminat de citit
+            close(pipe2[0]);
         }
         else if (files[i].type == image)            // daca este un fisier bmp vom creea 2 procese
         {
@@ -197,40 +226,13 @@ void processDIR(char *din_path, char *dout_path, char *c)
                 if (pid[processCount - 1] == 0) {
                     // un proces va scrie numarul de linii, iar celalalt va modifica imaginea
                     if (j == 0)
-                        nr = processImage1(files[i].file_name);
+                        nr = processImage1(files[i].file_name, din_path, dout_path);
                     else
-                        processImage2(files[i].file_name);
+                        processImage2(files[i].file_name, din_path);
                     exit(nr);
                 }
             }
         }
-    }
-
-    // inchidem capetele pe care nu le folosim
-    close(pipe1[0]);
-    close(pipe1[1]);
-    close(pipe2[1]);
-
-    // suma propozitilor corecte
-    int suma = 0;
-    
-    // in timp ce al doilea proces fiu creat pentru regular file scrie la stdout, procesul parinte citeste de acolo
-    char buffer[4096];
-    ssize_t bytesRead;
-    while ((bytesRead = read(pipe2[0], buffer, sizeof(buffer))) > 0) {
-        suma = atoi(buffer);
-    }
-
-    // inchidem capetele pe care nu le folosim
-    close(pipe2[0]);
-
-    // deschidem fisier statistica
-    int sfd = open("statistica.txt", O_APPEND | O_WRONLY | O_CREAT,  0666);
-
-    if (sfd < 0)
-    {
-        perror("Eroare creare fisier statistica!");
-        exit(1);
     }
 
     int status;
@@ -241,18 +243,6 @@ void processDIR(char *din_path, char *dout_path, char *c)
             printf("Procesul fiu %d s-a terminat cu codul %d\n", wpid, WEXITSTATUS(status));
         else
             printf("Procesul fiu %d s-a terminat anormal\n", wpid);
-
-        if (WEXITSTATUS(status) > 0)
-        {
-            dprintf(sfd, "%d\n", WEXITSTATUS(status));      // scriem in fisierul statistica din directorul de iesire numarul de linii scrise de procesul fiu curent
-        }
-    }
-
-    // inchidere fisier statistica
-    if (close(sfd) < 0)
-    {
-        perror("Eroare inchidere fisier statistica!");
-        exit(EXIT_FAILURE);
     }
 
     // eliberare memorie

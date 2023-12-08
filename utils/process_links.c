@@ -11,7 +11,7 @@
 #include "utils.h"
 
 /* functie procesare intrare curenta de tipul slink */
-int processLinks(char *file_name)
+int processLinks(char *file_name, char *din_path, char *dout_path)
 {
     int sfd;
     char path[PATH_MAX];
@@ -19,8 +19,8 @@ int processLinks(char *file_name)
     struct stat link_stat, file_stat;     
     char *nume_intare = extrageNumeIntrare(file_name);  // extragere nume pentru <intrare>_statistica
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);         // formare path intrare
-    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, nume_intare);   // formare path iesire
+    sprintf(path, "%s%s", din_path, file_name);         // formare path intrare
+    sprintf(outputFilePath, "%s%s_statistica.txt", dout_path, nume_intare);   // formare path iesire
     free(nume_intare);      // eliberare memorie nume
 
     // citire info slink folosind functia lstat
