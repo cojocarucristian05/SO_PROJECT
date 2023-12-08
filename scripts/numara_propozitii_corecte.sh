@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# Verifică dacă scriptul a primit exact un argument
+# Verifica daca scriptul a primit exact un argument
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <character>"
     exit 1
 fi
 
-# Salvează primul argument într-o variabilă
+# Salveaza primul argument într-o variabilă
 CHARACTER=$1
 
-# Verifică dacă argumentul este un caracter alfanumeric
+# Verifica daca argumentul este un caracter alfanumeric
 if [[ ! "$CHARACTER" =~ ^([A-Za-z]|[0-9])$ ]]; then
     echo "Eroare: Argumentul trebuie să fie un caracter alfanumeric."
     exit 1
 fi
 
-# Initializează contorul
+# Initializeaza contorul
 COUNT=0
 
 # Creez fisierul "out.txt"
@@ -52,5 +52,5 @@ done < out.txt
 # Elimin fisierul
 rm out.txt
 
-# Afsisez numarul de propozitii corecte
+# Afisez numarul de propozitii corecte
 echo "$COUNT"
