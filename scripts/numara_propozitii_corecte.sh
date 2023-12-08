@@ -6,7 +6,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-# Salveaza primul argument într-o variabilă
+# Salveaza primul argument intr-o variabila
 CHARACTER=$1
 
 # Verifica daca argumentul este un caracter alfanumeric
