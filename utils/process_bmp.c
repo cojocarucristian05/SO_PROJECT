@@ -15,14 +15,17 @@ void convertToGrayScale(BmpFormat *bmpFormat)
 {
     int size = bmpFormat->infoHeader.width * bmpFormat->infoHeader.height;
     for (int i = 0; i < size; i++) {
-        bmpFormat->colorTable[i].red = (char)(bmpFormat->colorTable[i].red * RED_PROPORTION);
-        bmpFormat->colorTable[i].green = (char)(bmpFormat->colorTable[i].green * GREEN_PROPORTION);
-        bmpFormat->colorTable[i].blue = (char)(bmpFormat->colorTable[i].blue * BLUE_PROPORTION);
+        int grayValue = (char)(bmpFormat->colorTable[i].red * RED_PROPORTION) +
+                        (char)(bmpFormat->colorTable[i].green * GREEN_PROPORTION) +
+                        (char)(bmpFormat->colorTable[i].blue * BLUE_PROPORTION);
+        bmpFormat->colorTable[i].red = grayValue;
+        bmpFormat->colorTable[i].green = grayValue;
+        bmpFormat->colorTable[i].blue = grayValue;
     }
 }
 
 // functie care parcurge fisierul imagine si retine intr-o structura conform header-ului informatii despre imagine
-BmpFormat* processImage(char *file_name)
+BmpFormat* processImage(char *file_name, char *din_path)
 {   
     char path[PATH_MAX];
     int imageFileDescriptor = 0;
@@ -34,7 +37,7 @@ BmpFormat* processImage(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);
+    sprintf(path, "%s%s", din_path, file_name);
     
     // deschidere fisier
     imageFileDescriptor = open(path, O_RDWR);
@@ -85,19 +88,19 @@ BmpFormat* processImage(char *file_name)
 }
 
 // functie pentru scrierea informatiilor in fisierul <intrare>_statistica
-int processImage1(char *file_name)
+int processImage1(char *file_name, char *din_path, char *dout_path)
 {
-    BmpFormat *bmp_format = processImage(file_name);    // extragem informatiile despre imagine
+    BmpFormat *bmp_format = processImage(file_name, din_path);    // extragem informatiile despre imagine
     int sfd;
     char path[PATH_MAX];
     char outputFilePath[PATH_MAX];
     struct stat image_stat;     
     char *nume_intare = extrageNumeIntrare(file_name);  // extragem numele intrarii curente (eliminam path-ul)
 
-    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, nume_intare);   // formare path fisier iesire
+    sprintf(outputFilePath, "%s%s_statistica.txt", dout_path, nume_intare);   // formare path fisier iesire
     free(nume_intare);  // eliberare memorie nume
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);         // formare path pentru a deschide fisierul
+    sprintf(path, "%s%s", din_path, file_name);         // formare path pentru a deschide fisierul
     // citire info fisier folosinf functia stat
     if (stat(path, &image_stat) < 0)
     {
@@ -136,14 +139,14 @@ int processImage1(char *file_name)
 }
 
 // functie care transforma imaginea in tonuri de gri
-void processImage2(char *file_name)
+void processImage2(char *file_name, char *din_path)
 {
     char path[PATH_MAX];
     int imageFileDescriptor = 0;
-    BmpFormat *bmp_format = processImage(file_name);
+    BmpFormat *bmp_format = processImage(file_name, din_path);
     int colorTableSize = bmp_format->infoHeader.width * bmp_format->infoHeader.height;
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);     // formare path fisier imagine
+    sprintf(path, "%s%s", din_path, file_name);     // formare path fisier imagine
     imageFileDescriptor = open(path, O_RDWR);       // deschidere fisier
     if (imageFileDescriptor < 0)
     {

@@ -15,7 +15,7 @@
 #define BUFFER_SIZE 1024
 
 /* functie procesare intrare curenta de tipul regular file scrie statistica, apoi scrie la iesirea standard continutul fisierului*/
-int processRegularFile(char *file_name)
+int processRegularFile(char *file_name, char *din_path, char *dout_path, int pipe)
 {
     // printf("nume fisier: %s\n", file_name);
     int sfd;
@@ -24,8 +24,8 @@ int processRegularFile(char *file_name)
     struct stat file_stat;     
     char *nume_intare = extrageNumeIntrare(file_name);      // extragere nume pentru <intrare>_statistica
 
-    sprintf(path, "%s%s", DIR_PATH, file_name);     // formare path intrare
-    sprintf(outputFilePath, "%s%s_statistica.txt", OUTPUT_DIR_PATH, nume_intare);       // formare path iesire
+    sprintf(path, "%s%s", din_path, file_name);     // formare path intrare
+    sprintf(outputFilePath, "%s%s_statistica.txt", dout_path, nume_intare);       // formare path iesire
     free(nume_intare);      // eliberare memorie nume
 
     // citire info fisier folosind functia stat
@@ -73,7 +73,7 @@ int processRegularFile(char *file_name)
 
     while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
     {
-        write(STDOUT_FILENO, buffer, bytesRead);
+        write(pipe, buffer, bytesRead);
     }
 
     if (close(fd)) 

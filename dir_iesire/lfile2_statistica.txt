@@ -1,7 +1,7 @@
 nume legatura: lfile2
 identificatorul utilizatorului: 1000
 dimensiune legatura: 8
-dimensiune fisier: 10
+dimensiune fisier: 88
 drepturi de acces user legatura: rwx
 drepturi de acces grup legatura: rwx
 drepturi de acces altii legatura: rwx

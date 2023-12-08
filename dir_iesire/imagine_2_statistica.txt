@@ -1,5 +1,7 @@
-nume fisier: file.txt
-identificatorul utilizatorului: 1000
+nume fisier: imagine_2.bmp
+inaltime: 426
+lungime: 640
+dimensiune: 818058
 identificatorul utilizatorului: 1000
 timpul ultimei modificari: 8.12.2023
 contorul de legaturi: 1
