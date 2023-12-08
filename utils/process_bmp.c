@@ -15,12 +15,12 @@ void convertToGrayScale(BmpFormat *bmpFormat)
 {
     int size = bmpFormat->infoHeader.width * bmpFormat->infoHeader.height;
     for (int i = 0; i < size; i++) {
-        int grayValue = (char)(bmpFormat->colorTable[i].red * RED_PROPORTION) +
-                        (char)(bmpFormat->colorTable[i].green * GREEN_PROPORTION) +
-                        (char)(bmpFormat->colorTable[i].blue * BLUE_PROPORTION);
-        bmpFormat->colorTable[i].red = grayValue;
-        bmpFormat->colorTable[i].green = grayValue;
-        bmpFormat->colorTable[i].blue = grayValue;
+        int grayValue = (char)(bmpFormat->rasterData[i].red * RED_PROPORTION) +
+                        (char)(bmpFormat->rasterData[i].green * GREEN_PROPORTION) +
+                        (char)(bmpFormat->rasterData[i].blue * BLUE_PROPORTION);
+        bmpFormat->rasterData[i].red = grayValue;
+        bmpFormat->rasterData[i].green = grayValue;
+        bmpFormat->rasterData[i].blue = grayValue;
     }
 }
 
@@ -61,20 +61,23 @@ BmpFormat* processImage(char *file_name, char *din_path)
         exit(EXIT_FAILURE);
     }
 
-    // alocare memorie tablou pixeli
-    int colorTableSize = bmpFormat->infoHeader.width * bmpFormat->infoHeader.height;
-    bmpFormat->colorTable = (ColorTable *)malloc(colorTableSize * sizeof(ColorTable));
-    if (bmpFormat->colorTable == NULL) 
+    if (bmpFormat->infoHeader.bitCount == 24) 
     {
-        perror("Eroare alocare memorie!");
-        exit(EXIT_FAILURE);
-    }
+        // alocare memorie tablou pixeli
+        int rasterDataSize = bmpFormat->infoHeader.width * bmpFormat->infoHeader.height;
+        bmpFormat->rasterData = (RasterData*)malloc(rasterDataSize * sizeof(RasterData));
+        if (bmpFormat->rasterData == NULL) 
+        {
+            perror("Eroare alocare memorie!");
+            exit(EXIT_FAILURE);
+        }
 
-    // citire color table
-    if (read(imageFileDescriptor, bmpFormat->colorTable, sizeof(ColorTable) * colorTableSize) != sizeof(ColorTable) * colorTableSize)
-    {
-        perror("Eroare citire color table!");
-        exit(EXIT_FAILURE);
+        // citire color table
+        if (read(imageFileDescriptor, bmpFormat->rasterData, sizeof(RasterData) * rasterDataSize) != sizeof(RasterData) * rasterDataSize)
+        {
+            perror("Eroare citire color table!");
+            exit(EXIT_FAILURE);
+        }
     }
 
     // inchidere fisier
@@ -144,7 +147,7 @@ void processImage2(char *file_name, char *din_path)
     char path[PATH_MAX];
     int imageFileDescriptor = 0;
     BmpFormat *bmp_format = processImage(file_name, din_path);
-    int colorTableSize = bmp_format->infoHeader.width * bmp_format->infoHeader.height;
+    int rasterDataSize = bmp_format->infoHeader.width * bmp_format->infoHeader.height;
 
     sprintf(path, "%s%s", din_path, file_name);     // formare path fisier imagine
     imageFileDescriptor = open(path, O_RDWR);       // deschidere fisier
@@ -154,20 +157,23 @@ void processImage2(char *file_name, char *din_path)
         exit(EXIT_FAILURE);
     }
 
-    convertToGrayScale(bmp_format);     // transformare pixeli
-
-    // mutam cursorul inapoi la pozitia de inceput a tabloului
-    if (lseek(imageFileDescriptor, bmp_format->header.dataOffset, SEEK_SET) < 0)
+    if (bmp_format->infoHeader.bitCount == 24)
     {
-        perror("Eroare setare cursor!");
-        exit(EXIT_FAILURE);
-    }
+        convertToGrayScale(bmp_format);     // transformare pixeli
 
-    // scriere date, in fisierul bmp suprascriem valoarea pixelilor originali cu cei modificati
-    if (write(imageFileDescriptor, bmp_format->colorTable, sizeof(ColorTable) * colorTableSize) != sizeof(ColorTable) * colorTableSize)
-    {
-        perror("Eroare scriere pixeli modificati!");
-        exit(EXIT_FAILURE);
+        // mutam cursorul inapoi la pozitia de inceput a tabloului
+        if (lseek(imageFileDescriptor, bmp_format->header.dataOffset, SEEK_SET) < 0)
+        {
+            perror("Eroare setare cursor!");
+            exit(EXIT_FAILURE);
+        }
+
+        // scriere date, in fisierul bmp suprascriem valoarea pixelilor originali cu cei modificati
+        if (write(imageFileDescriptor, bmp_format->rasterData, sizeof(RasterData) * rasterDataSize) != sizeof(RasterData) * rasterDataSize)
+        {
+            perror("Eroare scriere pixeli modificati!");
+            exit(EXIT_FAILURE);
+        }
     }
 
     // inchidere fisier imagine
